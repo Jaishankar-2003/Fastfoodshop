@@ -275,3 +275,91 @@ export async function markCashReceivedAction(orderId: string) {
   revalidatePath("/admin/orders");
   return { ok: true };
 }
+
+
+export async function clearOrderHistoryAction() {
+  const { shop } = await requireOwnerShop();
+
+  if (!shop) {
+    return {
+      error: "No shop found.",
+    };
+  }
+
+  const admin = createServiceClient();
+
+  // Find only historical orders.
+  const { data: allOrders, error: findError } = await admin
+    .from("orders")
+    .select(
+      "id, order_status, payment_method, payment_status",
+    )
+    .eq("shop_id", shop.id);
+
+  if (findError) {
+    return {
+      error: findError.message,
+    };
+  }
+
+  const historyOrders = (allOrders ?? []).filter(
+    (order) =>
+      order.order_status === "COMPLETED" ||
+      order.order_status === "CANCELLED" ||
+      (order.payment_method === "ONLINE" &&
+        order.payment_status !== "PAID"),
+  );
+
+  const orderIds = historyOrders.map(
+    (order) => order.id,
+  );
+
+  if (orderIds.length === 0) {
+    return {
+      ok: true,
+      deleted: 0,
+    };
+  }
+
+  // Delete child records first.
+  const { error: itemsError } = await admin
+    .from("order_items")
+    .delete()
+    .in("order_id", orderIds);
+
+  if (itemsError) {
+    return {
+      error: itemsError.message,
+    };
+  }
+
+  const { error: paymentsError } = await admin
+    .from("payments")
+    .delete()
+    .in("order_id", orderIds);
+
+  if (paymentsError) {
+    return {
+      error: paymentsError.message,
+    };
+  }
+
+  // Finally delete the orders.
+  const { error: ordersError } = await admin
+    .from("orders")
+    .delete()
+    .in("id", orderIds);
+
+  if (ordersError) {
+    return {
+      error: ordersError.message,
+    };
+  }
+
+  revalidatePath("/admin/orders");
+
+  return {
+    ok: true,
+    deleted: orderIds.length,
+  };
+}
