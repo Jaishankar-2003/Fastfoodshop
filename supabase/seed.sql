@@ -1,0 +1,12 @@
+-- Optional demo catalog. Run AFTER creating a shop in the admin UI,
+-- then replace the shop_id below — or skip and add menu items in admin.
+
+-- Example (do not run as-is without a real shop UUID):
+--
+-- insert into public.categories (shop_id, name, sort_order)
+-- values
+--   ('SHOP_UUID', 'Momos', 1),
+--   ('SHOP_UUID', 'Drinks', 2),
+--   ('SHOP_UUID', 'Snacks', 3),
+--   ('SHOP_UUID', 'Combos', 4),
+--   ('SHOP_UUID', 'Specials', 5);
