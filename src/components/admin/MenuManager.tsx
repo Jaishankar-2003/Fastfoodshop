@@ -25,7 +25,7 @@ function sampleMenuJson(categories: Category[]) {
         category: first,
         available: true,
         popular: true,
-        image_url: "",
+        image_url: "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=600&auto=format&fit=crop&q=80",
       },
       {
         name: "Chicken Momos",
@@ -34,7 +34,7 @@ function sampleMenuJson(categories: Category[]) {
         category: second,
         available: true,
         popular: false,
-        image_url: "",
+        image_url: "https://images.unsplash.com/photo-1625220194771-7ebdea0b70b9?w=600&auto=format&fit=crop&q=80",
       },
     ],
     null,

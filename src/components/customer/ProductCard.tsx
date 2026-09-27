@@ -105,12 +105,13 @@ export function ProductCard({
 
   return (
     <article
-      className={`overflow-hidden rounded-[22px] bg-white shadow-[0_3px_18px_rgba(35,20,10,0.055)] ring-1 ring-black/5 ${unavailable ? "opacity-60" : ""
-        }`}
+      className={`overflow-hidden rounded-[20px] bg-white p-2.5 shadow-[0_2px_12px_rgba(35,20,10,0.04)] ring-1 ring-black/5 transition-all ${
+        unavailable ? "opacity-60" : ""
+      }`}
     >
-      <div className="flex min-h-[145px] gap-3 p-3">
+      <div className="flex gap-3">
         {/* FOOD IMAGE */}
-        <div className="relative h-[128px] w-[128px] shrink-0 overflow-hidden rounded-[18px] bg-orange-50">
+        <div className="relative h-[105px] w-[105px] shrink-0 overflow-hidden rounded-[16px] bg-orange-50/70">
           {product.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -119,20 +120,20 @@ export function ProductCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl">
+            <div className="flex h-full w-full items-center justify-center text-3xl">
               🥟
             </div>
           )}
 
           {product.is_featured && !unavailable ? (
-            <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2 py-1 text-[9px] font-extrabold uppercase tracking-wide text-[#E85D04] shadow-sm">
+            <span className="absolute left-2 top-2 rounded-full bg-white/95 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#E85D04] shadow-sm">
               Popular
             </span>
           ) : null}
 
           {!product.is_available ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/45">
-              <span className="rounded-full bg-black/70 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wide text-white">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[1px]">
+              <span className="rounded-full bg-black/75 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
                 Sold out
               </span>
             </div>
@@ -141,40 +142,40 @@ export function ProductCard({
 
         {/* CONTENT */}
         <div className="flex min-w-0 flex-1 flex-col py-0.5">
-          <div>
-            <h3 className="line-clamp-2 text-[16px] font-extrabold leading-[1.2] text-[#17130F]">
+          <div className="min-w-0">
+            <h3 className="truncate text-[15px] font-extrabold leading-snug text-[#17130F]">
               {product.name}
             </h3>
 
             {product.description ? (
-              <p className="mt-1.5 line-clamp-2 text-[12px] leading-[1.45] text-[#786F67]">
+              <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[#786F67]">
                 {product.description}
               </p>
             ) : null}
           </div>
 
-          <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-            <p className="text-[17px] font-extrabold text-[#17130F]">
+          <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+            <p className="text-[16px] font-extrabold text-[#17130F]">
               {formatINR(product.price_paise)}
             </p>
 
             {!product.is_available ? (
-              <span className="pb-1 text-[10px] font-bold uppercase tracking-wide text-[#9A9189]">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-[#9A9189]">
                 Unavailable
               </span>
             ) : quantity > 0 ? (
-              <div className="flex h-10 items-center overflow-hidden rounded-full bg-[#FFF0E5]">
+              <div className="flex h-9 items-center overflow-hidden rounded-full bg-[#FFF0E5] ring-1 ring-[#E85D04]/20">
                 <button
                   type="button"
                   onClick={onDecrease}
                   disabled={disabled}
-                  className="flex h-10 w-10 items-center justify-center text-lg font-bold text-[#E85D04] active:bg-orange-100 disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center text-base font-bold text-[#E85D04] active:bg-orange-100 disabled:opacity-50"
                   aria-label={`Decrease ${product.name}`}
                 >
                   −
                 </button>
 
-                <span className="w-7 text-center text-sm font-extrabold text-[#17130F]">
+                <span className="w-6 text-center text-xs font-extrabold text-[#17130F]">
                   {quantity}
                 </span>
 
@@ -182,7 +183,7 @@ export function ProductCard({
                   type="button"
                   onClick={onIncrease}
                   disabled={disabled}
-                  className="flex h-10 w-10 items-center justify-center bg-[#E85D04] text-lg font-bold text-white active:bg-[#D65303] disabled:opacity-50"
+                  className="flex h-9 w-9 items-center justify-center bg-[#E85D04] text-base font-bold text-white active:bg-[#D65303] disabled:opacity-50"
                   aria-label={`Increase ${product.name}`}
                 >
                   +
@@ -193,9 +194,9 @@ export function ProductCard({
                 type="button"
                 onClick={onAdd}
                 disabled={disabled}
-                className="flex h-10 min-w-[70px] items-center justify-center rounded-full bg-[#E85D04] px-4 text-sm font-extrabold text-white shadow-sm active:scale-95 active:bg-[#D65303] disabled:cursor-not-allowed disabled:bg-[#C9C1B9]"
+                className="flex h-9 min-w-[70px] items-center justify-center rounded-full bg-[#E85D04] px-4 text-xs font-extrabold text-white shadow-sm active:scale-95 active:bg-[#D65303] disabled:cursor-not-allowed disabled:bg-[#C9C1B9]"
               >
-                Add
+                ADD +
               </button>
             )}
           </div>
