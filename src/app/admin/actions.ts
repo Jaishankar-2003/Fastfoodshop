@@ -204,6 +204,86 @@ export async function saveProductAction(formData: FormData) {
   return { ok: true };
 }
 
+export async function bulkUploadProductsAction(raw: unknown) {
+  const { shop } = await requireOwnerShop();
+  if (!shop) return { error: "No shop found." };
+
+  const list = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === "object" && Array.isArray((raw as { products?: unknown }).products)
+      ? (raw as { products: unknown[] }).products
+      : null;
+
+  if (!list) return { error: "JSON must be an array of products." };
+  if (list.length === 0) return { error: "No products in the file." };
+  if (list.length > 200) return { error: "Upload at most 200 products at a time." };
+
+  const admin = createServiceClient();
+  const { data: categories, error: catError } = await admin
+    .from("categories")
+    .select("id, name")
+    .eq("shop_id", shop.id);
+
+  if (catError) return { error: catError.message };
+  if (!categories?.length) return { error: "Create a category first, then upload products." };
+
+  const categoryByName = new Map(
+    categories.map((category) => [category.name.trim().toLowerCase(), category.id]),
+  );
+
+  const rows: Array<{
+    shop_id: string;
+    category_id: string;
+    name: string;
+    description: string | null;
+    price_paise: number;
+    is_available: boolean;
+    is_featured: boolean;
+    image_url: string | null;
+  }> = [];
+
+  for (let index = 0; index < list.length; index += 1) {
+    const item = list[index];
+    if (!item || typeof item !== "object") {
+      return { error: `Product ${index + 1} is invalid.` };
+    }
+
+    const record = item as Record<string, unknown>;
+    const name = String(record.name ?? "").trim();
+    const categoryName = String(record.category ?? "").trim();
+    const priceRupees = Number(record.price_rupees);
+    const description = String(record.description ?? "").trim();
+    const imageUrl = String(record.image_url ?? "").trim();
+    const categoryId = categoryByName.get(categoryName.toLowerCase());
+
+    if (!name) return { error: `Product ${index + 1} needs a name.` };
+    if (!categoryId) {
+      return { error: `Product ${index + 1}: unknown category "${categoryName}". Use an existing category name.` };
+    }
+    if (!Number.isFinite(priceRupees) || priceRupees < 0) {
+      return { error: `Product ${index + 1}: enter a valid price_rupees.` };
+    }
+
+    rows.push({
+      shop_id: shop.id,
+      category_id: categoryId,
+      name,
+      description: description || null,
+      price_paise: rupeesToPaise(priceRupees),
+      is_available: record.available === false ? false : true,
+      is_featured: record.popular === true,
+      image_url: imageUrl || null,
+    });
+  }
+
+  const { error } = await admin.from("products").insert(rows);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/menu");
+  revalidatePath(`/shop/${shop.slug}`);
+  return { ok: true, count: rows.length };
+}
+
 export async function deleteProductAction(id: string) {
   const { shop } = await requireOwnerShop();
   if (!shop) return { error: "No shop found." };

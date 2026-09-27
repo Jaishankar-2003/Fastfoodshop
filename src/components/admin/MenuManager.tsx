@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { paiseToRupees } from "@/lib/format";
-import { deleteProductAction, saveProductAction } from "@/app/admin/actions";
+import { bulkUploadProductsAction, deleteProductAction, saveProductAction } from "@/app/admin/actions";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import type { Category, Product } from "@/types/database";
 
@@ -12,9 +12,74 @@ type Props = {
   products: Product[];
 };
 
+function sampleMenuJson(categories: Category[]) {
+  const first = categories[0]?.name ?? "Snacks";
+  const second = categories[1]?.name ?? first;
+
+  return JSON.stringify(
+    [
+      {
+        name: "Veg Momos",
+        description: "Steamed vegetable dumplings",
+        price_rupees: 80,
+        category: first,
+        available: true,
+        popular: true,
+        image_url: "",
+      },
+      {
+        name: "Chicken Momos",
+        description: "Steamed chicken dumplings",
+        price_rupees: 120,
+        category: second,
+        available: true,
+        popular: false,
+        image_url: "",
+      },
+    ],
+    null,
+    2,
+  );
+}
+
 export function MenuManager({ shopId, categories, products }: Props) {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function downloadSample() {
+    const blob = new Blob([sampleMenuJson(categories)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "menu-sample.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function onUploadJson(file: File) {
+    setBulkError(null);
+    setBulkMessage(null);
+    setUploading(true);
+
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+      const result = await bulkUploadProductsAction(parsed);
+      if (result.error) {
+        setBulkError(result.error);
+        return;
+      }
+      setBulkMessage(`Added ${result.count} product${result.count === 1 ? "" : "s"}.`);
+    } catch {
+      setBulkError("Could not read that JSON file.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   if (!categories.length) {
     return <p className="text-sm text-muted">Create a category first, then add products.</p>;
@@ -22,16 +87,48 @@ export function MenuManager({ shopId, categories, products }: Props) {
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => {
-          setCreating(true);
-          setEditing(null);
-        }}
-        className="h-12 rounded-2xl bg-brand px-4 font-bold text-white"
-      >
-        Add product
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setCreating(true);
+            setEditing(null);
+          }}
+          className="h-12 rounded-2xl bg-brand px-4 font-bold text-white"
+        >
+          Add product
+        </button>
+        <button
+          type="button"
+          onClick={downloadSample}
+          className="h-12 rounded-2xl px-4 font-semibold ring-1 ring-line"
+        >
+          Sample JSON
+        </button>
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="h-12 rounded-2xl px-4 font-semibold ring-1 ring-line disabled:opacity-60"
+        >
+          {uploading ? "Uploading…" : "Upload JSON"}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void onUploadJson(file);
+          }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        Bulk upload uses your existing category names. Price is in rupees.
+      </p>
+      {bulkError ? <p className="mt-2 text-sm text-red-600">{bulkError}</p> : null}
+      {bulkMessage ? <p className="mt-2 text-sm text-emerald-700">{bulkMessage}</p> : null}
 
       {creating || editing ? (
         <ProductForm
