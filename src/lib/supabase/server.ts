@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { isSupabaseConfigured } from "@/lib/env";
+import { customSupabaseFetch } from "./fetch";
 
 export async function createServerSupabaseClient() {
   if (!isSupabaseConfigured()) {
@@ -13,6 +14,9 @@ export async function createServerSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: {
+        fetch: customSupabaseFetch,
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll();

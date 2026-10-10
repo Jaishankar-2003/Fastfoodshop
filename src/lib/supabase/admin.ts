@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { requireEnv } from "@/lib/env";
+import { customSupabaseFetch } from "./fetch";
 
 export function createServiceClient() {
   return createClient(
@@ -9,6 +10,9 @@ export function createServiceClient() {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
+      },
+      global: {
+        fetch: customSupabaseFetch,
       },
     },
   );

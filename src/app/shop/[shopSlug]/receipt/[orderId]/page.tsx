@@ -55,7 +55,7 @@ export default function ReceiptPage() {
         </div>
         <p className="mt-4 text-sm">Payment: {order.payment_method}</p>
         <p className="text-sm">Status: {order.order_status}</p>
-        <p className="mt-6 text-center text-sm text-muted">Thank you!</p>
+        <p className="mt-6 text-center text-sm text-muted">Thank you please take Snap !!!</p>
       </article>
     </main>
   );

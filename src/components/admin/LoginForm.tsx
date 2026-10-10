@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useSearchParams } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
+import { signInAction, signUpAction } from "@/app/admin/actions";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState<"login" | "signup">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("test@gmail.com");
+  const [password, setPassword] = useState("test12");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const setup = searchParams.get("setup") === "1";
@@ -26,16 +25,24 @@ export function LoginForm() {
 
     setBusy(true);
     try {
-      const supabase = createClient();
       if (mode === "signup") {
-        const { error: signError } = await supabase.auth.signUp({ email, password });
-        if (signError) throw signError;
+        const res = await signUpAction(email, password);
+        if (res.error) {
+          setError(res.error);
+          return;
+        }
+        if (res.unconfirmed) {
+          setError(res.message);
+          return;
+        }
       } else {
-        const { error: signError } = await supabase.auth.signInWithPassword({ email, password });
-        if (signError) throw signError;
+        const res = await signInAction(email, password);
+        if (res.error) {
+          setError(res.error);
+          return;
+        }
       }
-      router.replace("/admin");
-      router.refresh();
+      window.location.href = "/admin";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
     } finally {

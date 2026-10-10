@@ -20,6 +20,50 @@ async function requireOwnerShop() {
   return { user, shop };
 }
 
+export async function signInAction(emailInput: string, passwordInput: string) {
+  const email = emailInput.trim();
+  const password = passwordInput.trim();
+
+  if (!email || !password) {
+    return { error: "Email and password are required." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { ok: true };
+}
+
+export async function signUpAction(emailInput: string, passwordInput: string) {
+  const email = emailInput.trim();
+  const password = passwordInput.trim();
+
+  if (!email || !password) {
+    return { error: "Email and password are required." };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.auth.signUp({ email, password });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (data?.user && !data.session) {
+    return {
+      unconfirmed: true,
+      message:
+        "Account created! If email confirmation is enabled in your Supabase project, please confirm your email or turn off 'Confirm email' in Supabase Auth settings before signing in.",
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function createShopAction(formData: FormData) {
   const { user, shop } = await requireOwnerShop();
   if (shop) {
